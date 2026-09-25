@@ -52,11 +52,12 @@ selection. Other desktop implementations may defer the request until a paste.
 | Check | Result |
 |---|---|
 | Core compilation on macOS arm64 | Passed |
-| Codec and protocol tests | Passed |
+| Codec and protocol tests, including ASan/UBSan | Passed |
 | Native Mac → compiled server, accented/Japanese UTF-8 | Passed |
 | Compiled server → native Mac paste, accented/Japanese UTF-8 | Passed |
-| Oracle Linux 7/8/9 package builds | See GitHub Actions results; not run locally |
-| Full X11 desktop clipboard on Oracle Linux 7/8/9 | Pending Linux test hosts |
+| Oracle Linux 7/8/9 x86_64 package builds | Passed in CI |
+| Xvfb/xclip clipboard on Oracle Linux 7/8/9, UTF-8/newlines both directions | Passed in CI |
+| Native Mac connected to full GNOME sessions on Oracle Linux 7/8/9 | Pending deployment acceptance |
 | Other macOS versions / Wayland / rich clipboard formats | Not validated |
 
 For release acceptance, on each Oracle Linux version run the packaged server
@@ -65,3 +66,7 @@ GUI editor; empty text, newlines and non-ASCII text; repeated copy/paste; reconn
 `AcceptCutText=0`; `SendCutText=0`; read-only VNC credentials; and an ordinary
 TigerVNC viewer alongside the Mac client. Do not infer desktop compatibility from
 the synthetic peer alone.
+
+The verified implementation is commit `75b0256c2865cedbd4246d6a6979643ba5268e56`:
+[Oracle Linux build/test results and packages](https://github.com/osheinin/LinuxScreenSharing/actions/runs/36196892008).
+The inherited Linux/macOS/Windows build and test jobs also passed at that commit.

@@ -21,7 +21,8 @@ sudo bash packaging/oracle-linux/install-deps.sh
 bash packaging/oracle-linux/build.sh
 ```
 
-The dependency script enables Oracle's development repositories. OL7 uses
+The dependency script enables Oracle's development/EPEL repositories and installs
+Xvfb/xclip for the integration test. OL7 uses
 Devtoolset 11 and CMake 3 from Oracle's Software Collections/EPEL repositories;
 OL8/9 use their standard compiler and CMake. Build separately on each target
 release. The output is `dist/tigervnc-apple-olVERSION-ARCH.tar.gz` and installs
@@ -35,7 +36,8 @@ docker build --build-arg OL_VERSION=9 \
 ```
 
 Repeat with `OL_VERSION=7` and `8`. The `Oracle Linux Apple clipboard` GitHub
-Actions workflow builds all three x86_64 packages and runs the protocol tests.
+Actions workflow builds all three x86_64 packages, runs the protocol tests, and
+checks bidirectional X11 clipboard exchange using Xvfb and xclip.
 
 ## Run and connect
 
@@ -83,13 +85,16 @@ Apple connections fail if `VncAuth` is not enabled.
   and inconsistent zlib sizes terminate that client connection.
 - Ordinary RFB clients continue using the existing clipboard protocol.
 - The tests cover codecs, byte-by-byte fragmentation, standard and Apple password
-  handshakes, shared-session flags, and clipboard access controls.
+  handshakes, shared-session flags, clipboard access controls, and manual transfers.
 
 Verified locally on macOS 26.7: the compiled TigerVNC test peer exchanged
 `Mac clipboard test café 日本語` and `Linux clipboard test café 日本語` with the
 built-in Screen Sharing app. This tests the actual server protocol library, using
-a synthetic framebuffer. **It is not a substitute for a full Oracle Linux desktop
-test.** See `docs/apple-clipboard.md` for protocol details and the remaining matrix.
+a synthetic framebuffer. Separately, all three Oracle Linux versions passed
+package builds and bidirectional X11 clipboard tests with Xvfb/xclip, including
+Unicode and newlines. [Passing build and artifacts](https://github.com/osheinin/LinuxScreenSharing/actions/runs/36196892008).
+Full GNOME desktop sessions and other macOS versions still need acceptance testing.
+See `docs/apple-clipboard.md` for protocol details and the remaining matrix.
 
 To repeat the native-client test after a normal CMake build, run
 `build/tests/apple/apple_clipboard_peer`, connect to `localhost:5992` using the
