@@ -58,6 +58,8 @@ namespace rfb {
     void writeBell();
 
     void writeServerCutText(const char* str);
+    void writeAppleClipboard(const char* str, bool promise);
+    void writeAppleClipboardNotify(bool request);
 
     void writeClipboardCaps(uint32_t caps, const uint32_t* lengths);
     void writeClipboardRequest(uint32_t flags);

@@ -38,6 +38,7 @@ namespace rfb {
     static core::IntParameter compareFB;
     static core::IntParameter frameRate;
     static core::BoolParameter protocol3_3;
+    static core::BoolParameter appleClipboard;
     static core::BoolParameter alwaysShared;
     static core::BoolParameter neverShared;
     static core::BoolParameter disconnectClients;
@@ -53,4 +54,3 @@ namespace rfb {
 };
 
 #endif // __RFB_SERVER_CORE_H__
-

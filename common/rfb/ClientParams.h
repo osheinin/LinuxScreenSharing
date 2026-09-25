@@ -51,6 +51,8 @@ namespace rfb {
 
     int majorVersion;
     int minorVersion;
+    bool apple;
+    bool appleSharedClipboard;
 
     void setVersion(int major, int minor) {
       majorVersion = major; minorVersion = minor;

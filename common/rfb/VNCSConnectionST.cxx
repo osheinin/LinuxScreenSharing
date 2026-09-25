@@ -773,7 +773,10 @@ void VNCSConnectionST::enableContinuousUpdates(bool enable,
   if (!accessCheck(AccessView))
     return;
 
-  if (!client.supportsFence() || !client.supportsContinuousUpdates())
+  // Apple has its own automatic-update command, without the Fence extension.
+  // isCongested() still prevents queuing frames while socket output is pending.
+  if (!client.apple &&
+      (!client.supportsFence() || !client.supportsContinuousUpdates()))
     throw protocol_error(
       _("Client tried to enable continuous updates when not allowed"));
 
@@ -784,7 +787,7 @@ void VNCSConnectionST::enableContinuousUpdates(bool enable,
 
   if (enable) {
     requested.clear();
-  } else {
+  } else if (!client.apple) {
     writer()->writeEndOfContinuousUpdates();
   }
 }

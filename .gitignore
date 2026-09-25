@@ -13,3 +13,9 @@ config.h
 cmake_install.cmake
 cmake_uninstall.cmake
 install_manifest.txt
+
+# Local development tooling and build outputs
+.build-tools/
+build*/
+__pycache__/
+dist/

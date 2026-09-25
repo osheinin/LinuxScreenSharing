@@ -4,6 +4,7 @@ endif()
 
 # Benchmarking tools
 add_subdirectory(perf)
+add_subdirectory(apple)
 
 # Unit tests
 if(GTest_FOUND)

@@ -26,6 +26,7 @@ target_link_libraries(rfb core rdr)
 target_link_libraries(rfb ${JPEG_LIBRARIES})
 
 add_library(rfbserver STATIC
+  AppleClipboard.cxx
   ClientParams.cxx
   EncodeManager.cxx
   Encoder.cxx

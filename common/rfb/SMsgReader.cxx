@@ -41,6 +41,7 @@
 #include <rfb/ScreenSet.h>
 #include <rfb/SMsgHandler.h>
 #include <rfb/SMsgReader.h>
+#include <rfb/AppleClipboard.h>
 
 using namespace rfb;
 
@@ -64,7 +65,8 @@ bool SMsgReader::readClientInit()
 {
   if (!is->hasData(1))
     return false;
-  bool shared = is->readU8();
+  uint8_t flags = is->readU8();
+  bool shared = handler->client.apple ? (flags & 1) : flags;
   handler->clientInit(shared);
   return true;
 }
@@ -113,6 +115,10 @@ bool SMsgReader::readMsg()
     ret = readQEMUMessage();
     break;
   default:
+    if (handler->client.apple) {
+      ret = readAppleMessage();
+      break;
+    }
     vlog.error(_("Unknown message type %d"), currentMsgType);
     throw protocol_error(_("Unknown message type"));
   }
@@ -121,6 +127,70 @@ bool SMsgReader::readMsg()
     state = MSGSTATE_IDLE;
 
   return ret;
+}
+
+bool SMsgReader::readAppleMessage()
+{
+  switch (currentMsgType) {
+  case 9: { // Apple automatic framebuffer updates
+    if (!is->hasData(15)) return false;
+    is->skip(1);
+    uint16_t version = is->readU16();
+    is->skip(4); // display ID; this server exposes one combined framebuffer
+    int x = is->readU16(), y = is->readU16();
+    int w = is->readU16(), h = is->readU16();
+    if (version > 1) throw protocol_error("Invalid Apple update mode");
+    handler->enableContinuousUpdates(version != 0, x, y, w, h);
+    return true;
+  }
+  case 10: // Observe/control: actual permissions remain server controlled
+    if (!is->hasData(3)) return false;
+    is->skip(1);
+    if (is->readU16() > 1) throw protocol_error("Invalid Apple control mode");
+    return true;
+  case 11: {
+    if (!is->hasData(7)) return false;
+    bool promise = is->readU8() != 0;
+    is->skip(6);
+    handler->appleClipboardRequest(promise);
+    return true;
+  }
+  case 21: {
+    if (!is->hasData(7)) return false;
+    is->skip(2);
+    uint8_t mode = is->readU8();
+    is->skip(4);
+    if (mode != 1 && mode != 2)
+      throw protocol_error("Invalid Apple shared clipboard mode");
+    handler->appleClipboardEnable(mode == 1);
+    return true;
+  }
+  case 31: {
+    if (!is->hasData(15)) return false;
+    is->setRestorePoint();
+    is->skip(1);
+    uint8_t promise = is->readU8();
+    is->skip(5);
+    uint32_t expanded = is->readU32();
+    uint32_t compressed = is->readU32();
+    if (promise > 1 || expanded > (unsigned)maxCutText ||
+        expanded > appleClipboardLimit || compressed > appleClipboardLimit)
+      throw protocol_error("Invalid or oversized Apple clipboard");
+    if (!is->hasDataOrRestore(compressed)) return false;
+    is->clearRestorePoint();
+    std::vector<uint8_t> packed(compressed);
+    is->readBytes(packed.data(), packed.size());
+    std::vector<uint8_t> archive = inflateAppleClipboard(
+      packed.data(), packed.size(), expanded, maxCutText);
+    std::string text;
+    bool available = unpackAppleClipboard(archive.data(), archive.size(),
+                                         promise != 0, &text);
+    handler->appleClipboardData(promise != 0, available, text.c_str());
+    return true;
+  }
+  default:
+    throw protocol_error("Unsupported Apple message type");
+  }
 }
 
 bool SMsgReader::readSetPixelFormat()

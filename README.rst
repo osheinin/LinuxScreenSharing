@@ -1,3 +1,10 @@
+Apple Screen Sharing clipboard fork
+===================================
+
+This fork adds UTF-8 text copy/paste with the built-in macOS client and build
+recipes for Oracle Linux 7, 8 and 9. See `README.apple.md <README.apple.md>`_
+for installation, usage, validation status and limitations.
+
 About TigerVNC
 ==============
 

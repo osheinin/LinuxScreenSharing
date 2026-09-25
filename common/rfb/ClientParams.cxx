@@ -39,7 +39,7 @@ using namespace rfb;
 static core::LogWriter vlog("ClientParams");
 
 ClientParams::ClientParams()
-  : majorVersion(0), minorVersion(0),
+  : majorVersion(0), minorVersion(0), apple(false), appleSharedClipboard(false),
     compressLevel(2), qualityLevel(-1), fineQualityLevel(-1),
     subsampling(subsampleUndefined),
     width_(0), height_(0),

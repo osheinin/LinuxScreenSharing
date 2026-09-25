@@ -154,6 +154,10 @@ namespace rfb {
     void setEncodings(int nEncodings, const int32_t* encodings) override;
 
     void clientCutText(const char* str) override;
+    void appleClipboardRequest(bool promise) override;
+    void appleClipboardData(bool promise, bool available,
+                            const char* text) override;
+    void appleClipboardEnable(bool enable) override;
 
     void handleClipboardCaps(uint32_t flags,
                              const uint32_t* lengths) override;

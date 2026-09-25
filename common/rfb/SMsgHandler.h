@@ -57,6 +57,10 @@ namespace rfb {
                               uint16_t buttonMask) = 0;
 
     virtual void clientCutText(const char* str) = 0;
+    virtual void appleClipboardRequest(bool promise) = 0;
+    virtual void appleClipboardData(bool promise, bool available,
+                                    const char* text) = 0;
+    virtual void appleClipboardEnable(bool enable) = 0;
 
     virtual void handleClipboardCaps(uint32_t flags,
                                      const uint32_t* lengths) = 0;
