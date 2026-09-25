@@ -29,6 +29,7 @@ output_dir="${OUTPUT_DIR:-$source_dir/dist}"
   x0vncserver vncpasswd apple_clipboard_test apple_protocol_test --parallel "${JOBS:-2}"
 # CTest 3.17 (OL7) does not support --test-dir.
 (cd "$build_dir" && "$ctest_bin" --output-on-failure -R '^apple_')
+python3 "$source_dir/tests/apple/x11_clipboard_smoke.py" "$build_dir"
 stage="$build_dir/apple-package"
 prefix="$stage/opt/tigervnc-apple"
 mkdir -p "$prefix/bin" "$prefix/share/man/man1" "$prefix/share/doc" "$output_dir"
