@@ -10,8 +10,8 @@ License:        GPL-2.0-or-later AND MIT
 URL:            https://github.com/osheinin/LinuxScreenSharing
 Source0:        %{name}-%{version}.tar.gz
 ExclusiveArch:  x86_64
-Requires:       oraclelinux-release >= 9
-Requires:       oraclelinux-release < 10
+Requires:       oraclelinux-release
+Requires:       system-release(releasever) = 9
 BuildRequires:  gcc, gcc-c++, cmake, make
 BuildRequires:  zlib-devel, pixman-devel, libjpeg-turbo-devel, gnutls-devel
 BuildRequires:  libX11-devel, libXext-devel, libXtst-devel
