@@ -62,7 +62,7 @@ std::vector<uint8_t> rfb::packAppleClipboard(const char* text, bool promise)
 {
   if (!text) return {};
   size_t len = strlen(text);
-  if (len > appleClipboardLimit - 1024 || !validUTF8(text))
+  if (len > appleClipboardTextLimit || !validUTF8(text))
     throw std::invalid_argument("Invalid or oversized Apple clipboard text");
   std::vector<uint8_t> out;
   put32(out, 1);

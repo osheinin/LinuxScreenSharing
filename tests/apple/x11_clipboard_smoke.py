@@ -168,9 +168,11 @@ def main():
                             client.sock.sendall(bytes([11, 0, 0, 0, 0, 0, 0, 0]))
                             assert TEXT in client.wait(31)
                             previous_owner = xlib.XGetSelectionOwner(xdisplay, atom)
-                        # Mac -> Linux: publish a promise, let an X application
-                        # request the selection, then provide the actual text.
+                        # x0vncserver fetches advertised text immediately so it
+                        # can own the X selection; it then serves local apps.
                         client.sock.sendall(clipboard(promise=True))
+                        client.wait(20, 3)
+                        client.sock.sendall(clipboard())
                         for _ in range(100):
                             current_owner = xlib.XGetSelectionOwner(xdisplay, atom)
                             if current_owner and current_owner != previous_owner:
@@ -181,8 +183,6 @@ def main():
                         with process(['xclip', '-selection', 'clipboard', '-out'],
                                      env=env, stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE) as reader:
-                            client.wait(20, 3)
-                            client.sock.sendall(clipboard())
                             result, errors = reader.communicate(timeout=15)
                             assert reader.returncode == 0, errors.decode()
                             assert result == TEXT, 'X11 clipboard contents did not match'

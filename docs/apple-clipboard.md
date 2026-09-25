@@ -44,8 +44,8 @@ archive means no flavors. Only `public.utf8-plain-text` is consumed and exported
 Client promises announce available text without transferring it. TigerVNC requests
 the data when its desktop needs it. In the reverse direction, TigerVNC announces
 changes; the Mac requests promises and then data when a local paste needs it.
-This lazy behavior means a successful connection does not immediately transfer
-the local clipboard contents.
+x0vncserver fetches advertised client text immediately so it can own the X11
+selection. Other desktop implementations may defer the request until a paste.
 
 ## Validation matrix
 

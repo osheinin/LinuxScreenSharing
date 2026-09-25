@@ -112,6 +112,14 @@ int main()
   input.append(packet.data(), packet.length()); assert(c.processMsg());
   assert(c.transfers == 1 && c.received == "caf\xc3\xa9");
 
+  Input manualInput; rdr::MemOutStream manualOutput;
+  Connection manual; manual.normal(&manualInput, &manualOutput);
+  manualInput.append(packet.data(), packet.length()); assert(manual.processMsg());
+  assert(manual.announces == 1 && manual.available && manual.transfers == 0);
+  manual.requestClipboard();
+  assert(manual.transfers == 1 && manual.received == "caf\xc3\xa9");
+  assert(manualOutput.length() == 0); // The full manual clipboard is cached.
+
   // Clipboard access and the administrator's direction switches apply to Apple too.
   c.setAccessRights(rfb::AccessView);
   input.append(packet.data(), packet.length()); assert(c.processMsg());

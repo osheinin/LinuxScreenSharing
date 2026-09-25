@@ -57,7 +57,7 @@ SConnection::SConnection(AccessRights accessRights_)
     state_(RFBSTATE_UNINITIALISED), preferredEncoding(encodingRaw),
     accessRights(accessRights_), hasRemoteClipboard(false),
     hasLocalClipboard(false),
-    unsolicitedClipboardAttempt(false)
+    unsolicitedClipboardAttempt(false), appleClipboardPending(false)
 {
   defaultMajorVersion = 3;
   defaultMinorVersion = 8;
@@ -467,13 +467,21 @@ void SConnection::appleClipboardData(bool promise, bool available,
   if (promise) {
     hasLocalClipboard = false;
     hasRemoteClipboard = false;
+    appleClipboardPending = false;
     clientClipboard.clear();
     handleClipboardAnnounce(available);
   } else if (available) {
+    bool requested = appleClipboardPending;
+    appleClipboardPending = false;
+    hasLocalClipboard = false;
     clientClipboard = text;
     hasRemoteClipboard = true;
-    handleClipboardData(clientClipboard.c_str());
+    if (requested)
+      handleClipboardData(clientClipboard.c_str());
+    else
+      handleClipboardAnnounce(true); // Manual "Send Clipboard" has no promise.
   } else {
+    appleClipboardPending = false;
     hasRemoteClipboard = false;
     clientClipboard.clear();
     handleClipboardAnnounce(false);
@@ -723,8 +731,10 @@ void SConnection::requestClipboard()
   }
 
   if (client.apple) {
-    if (rfb::Server::acceptCutText)
+    if (rfb::Server::acceptCutText) {
+      appleClipboardPending = true;
       writer()->writeAppleClipboardNotify(true);
+    }
     return;
   }
 
@@ -774,8 +784,12 @@ void SConnection::sendClipboardData(const char* data)
     return;
 
   if (client.apple) {
-    if (rfb::Server::sendCutText && strlen(data) <= appleClipboardLimit - 1024)
-      writer()->writeAppleClipboard(data, false);
+    if (rfb::Server::sendCutText) {
+      // Reply with no flavors if oversized, rather than leaving a Mac paste
+      // waiting forever for data that will never arrive.
+      writer()->writeAppleClipboard(
+        strlen(data) <= appleClipboardTextLimit ? data : nullptr, false);
+    }
     return;
   }
 
