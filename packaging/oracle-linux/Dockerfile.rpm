@@ -1,0 +1,29 @@
+FROM oraclelinux:9 AS build
+COPY packaging/oracle-linux/install-deps.sh /tmp/install-deps.sh
+RUN bash /tmp/install-deps.sh && dnf install -y rpm-build
+COPY dist/rpm-source/tigervnc-apple-1.16.80.tar.gz /root/rpmbuild/SOURCES/tigervnc-apple-1.16.80.tar.gz
+COPY packaging/oracle-linux/tigervnc-apple.spec /root/rpmbuild/SPECS/tigervnc-apple.spec
+RUN rpmbuild -ba --define 'dist .el9' /root/rpmbuild/SPECS/tigervnc-apple.spec && \
+    mkdir /out && \
+    cp /root/rpmbuild/RPMS/x86_64/*.rpm /root/rpmbuild/SRPMS/*.rpm /out/
+
+# First install with only the RPM's declared dependencies in a fresh OL9 image.
+FROM oraclelinux:9 AS verify
+COPY --from=build /out/ /out/
+RUN dnf install -y /out/tigervnc-apple-*.x86_64.rpm && \
+    rpm -V tigervnc-apple && \
+    rpm -q --requires tigervnc-apple && \
+    /opt/tigervnc-apple/bin/vncpasswd --version
+# Then add the test tools and exercise the installed, RPM-stripped binaries.
+RUN dnf install -y oracle-epel-release-el9 && \
+    dnf install -y xorg-x11-server-Xvfb xclip python3 openssl
+COPY tests/apple/x11_clipboard_smoke.py /tmp/x11_clipboard_smoke.py
+RUN mkdir -p /tmp/installed/unix/x0vncserver /tmp/installed/unix/vncpasswd && \
+    ln -s /opt/tigervnc-apple/bin/x0vncserver /tmp/installed/unix/x0vncserver/x0vncserver && \
+    ln -s /opt/tigervnc-apple/bin/vncpasswd /tmp/installed/unix/vncpasswd/vncpasswd && \
+    python3 /tmp/x11_clipboard_smoke.py /tmp/installed && \
+    dnf remove -y tigervnc-apple && test ! -e /opt/tigervnc-apple/bin/x0vncserver && \
+    cd /out && sha256sum *.rpm > SHA256SUMS
+
+FROM scratch AS artifact
+COPY --from=verify /out/ /

@@ -1,3 +1,4 @@
+# Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 #
 # Setup
 #

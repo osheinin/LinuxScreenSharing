@@ -1,3 +1,4 @@
+.\" Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 .TH X0VNCSERVER 1 "" "TigerVNC" "TigerVNC Manual"
 .SH NAME
 x0vncserver \- TigerVNC server for X displays

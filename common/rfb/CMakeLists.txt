@@ -1,3 +1,4 @@
+# Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   message(FATAL_ERROR "cmake must be invoked with the top level directory")
 endif()

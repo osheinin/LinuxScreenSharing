@@ -1,0 +1,36 @@
+name: Oracle Linux 9 RPM
+on:
+  push:
+    branches: [codex/macos-clipboard]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rpm:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create matching source archive
+        shell: bash
+        run: |
+          mkdir -p dist/rpm-source dist/rpm-context/source
+          git archive HEAD | tar -x -C dist/rpm-context/source
+          git rev-parse HEAD > dist/rpm-context/source/SOURCE_REVISION
+          tar -C dist/rpm-context --transform='s,^source,tigervnc-apple-1.16.80,' \
+            -czf dist/rpm-source/tigervnc-apple-1.16.80.tar.gz source
+          cp -a dist/rpm-context/source/. dist/rpm-context/
+          rm -rf dist/rpm-context/source
+          mkdir -p dist/rpm-context/dist/rpm-source
+          cp dist/rpm-source/*.tar.gz dist/rpm-context/dist/rpm-source/
+          # This build context is an explicit tracked-source snapshot.
+          rm dist/rpm-context/.dockerignore
+      - name: Build source and binary RPMs and test install and removal
+        run: |
+          docker build --file packaging/oracle-linux/Dockerfile.rpm \
+            --output type=local,dest=dist/rpm dist/rpm-context
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tigervnc-apple-ol9-rpm-x86_64
+          path: dist/rpm/*
+          if-no-files-found: error

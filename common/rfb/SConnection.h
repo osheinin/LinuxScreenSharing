@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2011-2019 Pierre Ossman for Cendio AB
  * 
