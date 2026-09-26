@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2011-2019 Pierre Ossman for Cendio AB
  * 
@@ -44,6 +45,7 @@
 #include <rfb/encodings.h>
 #include <rfb/EncodeManager.h>
 #include <rfb/SSecurity.h>
+#include <rfb/AppleClipboard.h>
 
 using namespace rfb;
 
@@ -56,10 +58,12 @@ SConnection::SConnection(AccessRights accessRights_)
     state_(RFBSTATE_UNINITIALISED), preferredEncoding(encodingRaw),
     accessRights(accessRights_), hasRemoteClipboard(false),
     hasLocalClipboard(false),
-    unsolicitedClipboardAttempt(false)
+    unsolicitedClipboardAttempt(false), appleClipboardPending(false)
 {
   defaultMajorVersion = 3;
   defaultMinorVersion = 8;
+  if (rfb::Server::appleClipboard)
+    defaultMinorVersion = 889;
   if (rfb::Server::protocol3_3)
     defaultMinorVersion = 3;
 
@@ -134,6 +138,8 @@ bool SConnection::processVersionMsg()
   }
 
   client.setVersion(majorVersion, minorVersion);
+  client.apple = defaultMinorVersion == 889 &&
+                 majorVersion == 3 && minorVersion == 889;
 
   vlog.info(_("Client needs protocol version %d.%d"),
             client.majorVersion, client.minorVersion);
@@ -146,7 +152,7 @@ bool SConnection::processVersionMsg()
       defaultMajorVersion, defaultMinorVersion));
   }
 
-  if (client.minorVersion != 3 && client.minorVersion != 7 && client.minorVersion != 8) {
+  if (!client.apple && client.minorVersion != 3 && client.minorVersion != 7 && client.minorVersion != 8) {
     vlog.error(_("Client uses unofficial protocol version %d.%d"),
                client.majorVersion,client.minorVersion);
     if (client.minorVersion >= 8)
@@ -162,6 +168,18 @@ bool SConnection::processVersionMsg()
   std::list<uint8_t> secTypes;
   std::list<uint8_t>::iterator i;
   secTypes = security.GetEnabledSecTypes();
+
+  if (client.apple) {
+    // Apple's legacy password branch reads a list, but sends no selection
+    // byte. Offer only VncAuth, and never enable an unconfigured auth type.
+    if (std::find(secTypes.begin(), secTypes.end(), secTypeVncAuth) == secTypes.end())
+      failConnection("AppleClipboard requires SecurityTypes to include VncAuth");
+    os->writeU8(1);
+    os->writeU8(secTypeVncAuth);
+    os->flush();
+    processSecurityType(secTypeVncAuth);
+    return true;
+  }
 
   if (client.isVersion(3,3)) {
 
@@ -419,6 +437,58 @@ void SConnection::clientCutText(const char* str)
   handleClipboardAnnounce(true);
 }
 
+void SConnection::appleClipboardEnable(bool enable)
+{
+  client.appleSharedClipboard = enable;
+  if (enable && hasLocalClipboard && accessCheck(AccessCutText) &&
+      rfb::Server::sendCutText)
+    writer()->writeAppleClipboardNotify(false);
+}
+
+void SConnection::appleClipboardRequest(bool promise)
+{
+  if (!accessCheck(AccessCutText) || !rfb::Server::sendCutText)
+    return;
+  if (!hasLocalClipboard) {
+    writer()->writeAppleClipboard(nullptr, promise);
+    return;
+  }
+  if (promise) {
+    writer()->writeAppleClipboard("", true);
+  } else {
+    handleClipboardRequest();
+  }
+}
+
+void SConnection::appleClipboardData(bool promise, bool available,
+                                     const char* text)
+{
+  if (!accessCheck(AccessCutText) || !rfb::Server::acceptCutText)
+    return;
+  if (promise) {
+    hasLocalClipboard = false;
+    hasRemoteClipboard = false;
+    appleClipboardPending = false;
+    clientClipboard.clear();
+    handleClipboardAnnounce(available);
+  } else if (available) {
+    bool requested = appleClipboardPending;
+    appleClipboardPending = false;
+    hasLocalClipboard = false;
+    clientClipboard = text;
+    hasRemoteClipboard = true;
+    if (requested)
+      handleClipboardData(clientClipboard.c_str());
+    else
+      handleClipboardAnnounce(true); // Manual "Send Clipboard" has no promise.
+  } else {
+    appleClipboardPending = false;
+    hasRemoteClipboard = false;
+    clientClipboard.clear();
+    handleClipboardAnnounce(false);
+  }
+}
+
 void SConnection::handleClipboardCaps(uint32_t flags, const uint32_t* lengths)
 {
   int i;
@@ -661,6 +731,14 @@ void SConnection::requestClipboard()
     return;
   }
 
+  if (client.apple) {
+    if (rfb::Server::acceptCutText) {
+      appleClipboardPending = true;
+      writer()->writeAppleClipboardNotify(true);
+    }
+    return;
+  }
+
   if (client.supportsEncoding(pseudoEncodingExtendedClipboard) &&
       (client.clipboardFlags() & rfb::clipboardRequest))
     writer()->writeClipboardRequest(rfb::clipboardUTF8);
@@ -673,6 +751,12 @@ void SConnection::announceClipboard(bool available)
 
   hasLocalClipboard = available;
   unsolicitedClipboardAttempt = false;
+
+  if (client.apple) {
+    if (client.appleSharedClipboard && rfb::Server::sendCutText)
+      writer()->writeAppleClipboardNotify(false);
+    return;
+  }
 
   if (client.supportsEncoding(pseudoEncodingExtendedClipboard)) {
     // Attempt an unsolicited transfer?
@@ -699,6 +783,16 @@ void SConnection::sendClipboardData(const char* data)
 {
   if (!accessCheck(AccessCutText))
     return;
+
+  if (client.apple) {
+    if (rfb::Server::sendCutText) {
+      // Reply with no flavors if oversized, rather than leaving a Mac paste
+      // waiting forever for data that will never arrive.
+      writer()->writeAppleClipboard(
+        strlen(data) <= appleClipboardTextLimit ? data : nullptr, false);
+    }
+    return;
+  }
 
   if (client.supportsEncoding(pseudoEncodingExtendedClipboard) &&
       (client.clipboardFlags() & rfb::clipboardProvide)) {

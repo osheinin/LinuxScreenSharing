@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright (C) 2011 D. R. Commander.  All Rights Reserved.
  * Copyright 2009-2019 Pierre Ossman for Cendio AB
@@ -40,6 +41,7 @@
 #include <rfb/Encoder.h>
 #include <rfb/ScreenSet.h>
 #include <rfb/SMsgWriter.h>
+#include <rfb/AppleClipboard.h>
 #include <rfb/encodings.h>
 #include <rfb/ledStates.h>
 
@@ -66,8 +68,40 @@ void SMsgWriter::writeServerInit(uint16_t width, uint16_t height,
   os->writeU16(width);
   os->writeU16(height);
   pf.write(os);
-  os->writeU32(strlen(name));
+  os->writeU32(strlen(name) + (client->apple ? 22 : 0));
+  if (client->apple) {
+    os->writeU16(0);
+    os->writeU32(0);
+    uint8_t commands[16] = {};
+    for (int command : {0, 2, 3, 4, 5, 6, 9, 10, 11, 21, 31})
+      commands[command / 8] |= 0x80 >> (command % 8);
+    os->writeBytes(commands, sizeof(commands));
+  }
   os->writeBytes((const uint8_t*)name, strlen(name));
+  endMsg();
+}
+
+void SMsgWriter::writeAppleClipboardNotify(bool request)
+{
+  startMsg(20);
+  os->pad(1);
+  os->writeU16(4);
+  os->writeU16(1);
+  os->writeU16(request ? 3 : 2);
+  endMsg();
+}
+
+void SMsgWriter::writeAppleClipboard(const char* str, bool promise)
+{
+  std::vector<uint8_t> archive = packAppleClipboard(str, promise);
+  std::vector<uint8_t> packed = deflateAppleClipboard(archive);
+  startMsg(31);
+  os->pad(1);
+  os->writeU8(promise ? 1 : 0);
+  os->pad(5);
+  os->writeU32(archive.size());
+  os->writeU32(packed.size());
+  os->writeBytes(packed.data(), packed.size());
   endMsg();
 }
 

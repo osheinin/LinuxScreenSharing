@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2009-2019 Pierre Ossman for Cendio AB
  * 
@@ -57,6 +58,10 @@ namespace rfb {
                               uint16_t buttonMask) = 0;
 
     virtual void clientCutText(const char* str) = 0;
+    virtual void appleClipboardRequest(bool promise) = 0;
+    virtual void appleClipboardData(bool promise, bool available,
+                                    const char* text) = 0;
+    virtual void appleClipboardEnable(bool enable) = 0;
 
     virtual void handleClipboardCaps(uint32_t flags,
                                      const uint32_t* lengths) = 0;

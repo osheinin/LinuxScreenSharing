@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2009-2019 Pierre Ossman for Cendio AB
  * 
@@ -58,6 +59,8 @@ namespace rfb {
     void writeBell();
 
     void writeServerCutText(const char* str);
+    void writeAppleClipboard(const char* str, bool promise);
+    void writeAppleClipboardNotify(bool request);
 
     void writeClipboardCaps(uint32_t caps, const uint32_t* lengths);
     void writeClipboardRequest(uint32_t flags);

@@ -1,3 +1,4 @@
+.\" Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 .TH X0VNCSERVER 1 "" "TigerVNC" "TigerVNC Manual"
 .SH NAME
 x0vncserver \- TigerVNC server for X displays
@@ -234,6 +235,12 @@ keyboard layout. This effectively makes the keyboard behave according to the
 layout configured on the server instead of the layout configured on the
 client. Default is off.
 .
+.TP
+.B \-AppleClipboard
+Enable UTF-8 plain-text clipboard interoperability with Apple's Screen Sharing
+client. Requires VncAuth in SecurityTypes. Disabled by default. Use a localhost
+listener and an SSH tunnel, as VncAuth does not encrypt clipboard or desktop
+traffic. AcceptCutText, SendCutText and read-only access restrictions still apply.
 .TP
 .B \-AcceptCutText
 Accept clipboard updates from clients. Default is on.

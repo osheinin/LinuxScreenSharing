@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright (C) 2011 D. R. Commander.  All Rights Reserved.
  * Copyright 2014-2019 Pierre Ossman for Cendio AB
@@ -39,7 +40,7 @@ using namespace rfb;
 static core::LogWriter vlog("ClientParams");
 
 ClientParams::ClientParams()
-  : majorVersion(0), minorVersion(0),
+  : majorVersion(0), minorVersion(0), apple(false), appleSharedClipboard(false),
     compressLevel(2), qualityLevel(-1), fineQualityLevel(-1),
     subsampling(subsampleUndefined),
     width_(0), height_(0),

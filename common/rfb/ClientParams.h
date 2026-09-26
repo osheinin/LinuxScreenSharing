@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2014-2019 Pierre Ossman for Cendio AB
  * 
@@ -51,6 +52,8 @@ namespace rfb {
 
     int majorVersion;
     int minorVersion;
+    bool apple;
+    bool appleSharedClipboard;
 
     void setVersion(int major, int minor) {
       majorVersion = major; minorVersion = minor;
