@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * 
  * This is free software; you can redistribute it and/or modify
@@ -60,6 +61,10 @@ core::IntParameter rfb::Server::frameRate
 ("FrameRate",
  _("The maximum number of updates per second sent to each client"),
  60, 0, INT_MAX);
+core::BoolParameter rfb::Server::appleClipboard
+("AppleClipboard",
+ _("Enable Apple Screen Sharing text clipboard compatibility (requires VncAuth)"),
+ false);
 core::BoolParameter rfb::Server::protocol3_3
 ("Protocol3.3",
  _("Always use protocol version 3.3 for backwards compatibility with "

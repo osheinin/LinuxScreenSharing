@@ -1,3 +1,4 @@
+# Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   message(FATAL_ERROR "cmake must be invoked with the top level directory")
 endif()
@@ -26,6 +27,7 @@ target_link_libraries(rfb core rdr)
 target_link_libraries(rfb ${JPEG_LIBRARIES})
 
 add_library(rfbserver STATIC
+  AppleClipboard.cxx
   ClientParams.cxx
   EncodeManager.cxx
   Encoder.cxx

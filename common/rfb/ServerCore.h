@@ -1,3 +1,4 @@
+// Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * 
  * This is free software; you can redistribute it and/or modify
@@ -38,6 +39,7 @@ namespace rfb {
     static core::IntParameter compareFB;
     static core::IntParameter frameRate;
     static core::BoolParameter protocol3_3;
+    static core::BoolParameter appleClipboard;
     static core::BoolParameter alwaysShared;
     static core::BoolParameter neverShared;
     static core::BoolParameter disconnectClients;
@@ -53,4 +55,3 @@ namespace rfb {
 };
 
 #endif // __RFB_SERVER_CORE_H__
-
