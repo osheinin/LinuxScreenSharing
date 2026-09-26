@@ -1,3 +1,4 @@
+// Modified 2026-09-26 to avoid a null-source copy for empty cursors.
 /* Copyright (C) 2002-2005 RealVNC Ltd.  All Rights Reserved.
  * Copyright 2014-2023 Pierre Ossman for Cendio AB
  * 
@@ -39,7 +40,9 @@ Cursor::Cursor(int width, int height, const core::Point& hotspot,
   width_(width), height_(height), hotspot_(hotspot)
 {
   data = new uint8_t[width_*height_*4];
-  memcpy(data, data_, width_*height_*4);
+  // Empty cursors may have a null source; memcpy still requires non-null pointers.
+  if (width_ != 0 && height_ != 0)
+    memcpy(data, data_, width_*height_*4);
 }
 
 Cursor::Cursor(const Cursor& other) :
