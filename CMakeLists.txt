@@ -1,3 +1,4 @@
+# Modified 2026-09-25 by the LinuxScreenSharing fork for Apple clipboard support.
 #
 # Setup
 #
@@ -19,6 +20,7 @@ include(CheckCSourceRuns)
 include(CMakeMacroLibtoolFile)
 
 project(tigervnc)
+enable_testing()
 set(VERSION 1.16.80)
 
 # The RC version must always be four comma-separated numbers

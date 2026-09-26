@@ -1,0 +1,11 @@
+add_executable(apple_clipboard_test apple_clipboard_test.cxx)
+target_link_libraries(apple_clipboard_test rfbserver)
+add_test(NAME apple_clipboard COMMAND apple_clipboard_test)
+add_executable(apple_protocol_test apple_protocol_test.cxx)
+target_link_libraries(apple_protocol_test rfbserver)
+add_test(NAME apple_protocol COMMAND apple_protocol_test)
+
+if(UNIX)
+  add_executable(apple_clipboard_peer apple_clipboard_peer.cxx)
+  target_link_libraries(apple_clipboard_peer rfbserver)
+endif()

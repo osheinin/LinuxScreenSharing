@@ -1,0 +1,69 @@
+name: Apple clipboard interoperability
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  xvnc:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install build and integration test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang cmake autoconf automake libtool pkg-config \
+            xorg-server-source xutils-dev xtrans-dev x11proto-dev \
+            libpixman-1-dev libjpeg-turbo8-dev libgnutls28-dev \
+            libfltk1.3-dev fluid libx11-dev libxext-dev libxtst-dev \
+            libxdamage-dev libxfixes-dev libxrandr-dev libxfont-dev \
+            libxkbfile-dev libxcvt-dev libgcrypt20-dev libepoxy-dev \
+            libgl1-mesa-dev libdrm-dev libgbm-dev libxshmfence-dev \
+            xkb-data x11-xkb-utils xfonts-utils xvfb xclip xdotool python3 openssl
+      - name: Build TigerVNC and run protocol tests
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_VIEWER=ON \
+            -DENABLE_NLS=OFF -DENABLE_H264=OFF -DENABLE_AUDIO=OFF \
+            -DENABLE_WAYLAND=OFF -DENABLE_GNUTLS=ON -DENABLE_NETTLE=OFF \
+            -DENABLE_PAM=OFF -DENABLE_SYSTEMD=OFF -DENABLE_PWQUALITY=OFF
+          cmake --build build --parallel 4
+          ctest --test-dir build --output-on-failure -R '^apple_'
+      - name: Build Xvnc against the distribution Xorg source
+        run: |
+          cp -R unix/xserver build/unix/
+          tar -C build/unix/xserver -xf /usr/src/xorg-server.tar.xz --strip-components=1
+          cd build/unix/xserver
+          patch -p1 < ../../../unix/xserver21.patch
+          autoreconf -fiv
+          ./configure --disable-static --without-dtrace --disable-devel-docs \
+            --disable-docs --disable-unit-tests --disable-selective-werror \
+            --disable-xorg --disable-xwayland --disable-xnest --disable-xvfb \
+            --disable-xwin --disable-xquartz --disable-xephyr --disable-kdrive \
+            --disable-config-udev --disable-config-hal --disable-glamor \
+            --disable-dri --disable-dri2 --disable-dri3 --disable-glx \
+            --with-xkb-path=/usr/share/X11/xkb --with-xkb-bin-directory=/usr/bin \
+            --with-default-font-path=built-ins
+          make -j4 TIGERVNC_SRCDIR="$GITHUB_WORKSPACE" TIGERVNC_BUILDDIR="$GITHUB_WORKSPACE/build"
+      - name: Exercise x0vncserver and Xvnc with Apple and TigerVNC clients
+        run: |
+          timeout 120s python3 tests/apple/x11_clipboard_smoke.py build
+          timeout 180s python3 tests/apple/xvnc_clipboard_smoke.py build
+      - name: Address and undefined behavior sanitizer tests
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug -DBUILD_VIEWER=OFF \
+            -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+            -DENABLE_NLS=OFF -DENABLE_H264=OFF -DENABLE_AUDIO=OFF \
+            -DENABLE_WAYLAND=OFF -DENABLE_GNUTLS=OFF -DENABLE_NETTLE=OFF \
+            -DENABLE_PAM=OFF -DENABLE_SYSTEMD=OFF -DENABLE_PWQUALITY=OFF \
+            -DCMAKE_C_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer' \
+            -DCMAKE_CXX_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer'
+          cmake --build build-sanitize --target apple_clipboard_test apple_protocol_test --parallel 4
+          ctest --test-dir build-sanitize --output-on-failure -R '^apple_'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Xvnc-interop-test-binaries
+          path: |
+            build/unix/xserver/hw/vnc/Xvnc
+            build/vncviewer/vncviewer

@@ -49,6 +49,9 @@ jobs:
         with:
           name: Linux (Ubuntu)
           path: build/tigervnc-*.tar.gz
+      - name: Test Apple protocol
+        working-directory: build
+        run: ctest --output-on-failure -R "^apple_"
       - name: Test
         continue-on-error: true
         working-directory: build
@@ -118,6 +121,9 @@ jobs:
         with:
           name: Linux (Ubuntu, everything disabled)
           path: build/tigervnc-*.tar.gz
+      - name: Test Apple protocol
+        working-directory: build
+        run: ctest --output-on-failure -R "^apple_"
       - name: Test
         continue-on-error: true
         working-directory: build
@@ -195,6 +201,9 @@ jobs:
         with:
           name: Windows
           path: build/release/tigervnc*.exe
+      - name: Test Apple protocol
+        working-directory: build
+        run: ctest --output-on-failure -R "^apple_"
       - name: Test
         continue-on-error: true
         working-directory: build
@@ -252,6 +261,9 @@ jobs:
         with:
           name: macOS
           path: build/release/TigerVNC-*.dmg
+      - name: Test Apple protocol
+        working-directory: build
+        run: ctest --output-on-failure -R "^apple_"
       - name: Test
         continue-on-error: true
         working-directory: build
