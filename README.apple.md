@@ -12,11 +12,12 @@ Xvnc itself requires a separate compatible Xorg source tree; see `BUILDING.txt`.
 An existing Xvnc/Xvfb display can be shared through this `x0vncserver` as well.
 On OL8/9, choose an Xorg desktop session for this package.
 
-## Oracle Linux 9 RPM
+## Oracle Linux 8 and 9 RPMs
 
 For an installable x86_64 RPM and matching source RPM, see
-[the RPM guide](packaging/oracle-linux/README.rpm.md). The `Oracle Linux 9 RPM`
-workflow builds and tests both packages, including install and removal on OL9.
+[the RPM guide](packaging/oracle-linux/README.rpm.md). The `Oracle Linux RPM`
+workflow builds binary and source RPMs for each release and tests installation,
+clipboard exchange, and removal on the matching OS.
 
 ## Build on Oracle Linux
 

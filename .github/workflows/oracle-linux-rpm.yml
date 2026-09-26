@@ -1,4 +1,4 @@
-name: Oracle Linux 9 RPM
+name: Oracle Linux RPM
 on:
   push:
     branches: [codex/macos-clipboard]
@@ -9,6 +9,10 @@ jobs:
   rpm:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ['8', '9']
     steps:
       - uses: actions/checkout@v4
       - name: Create matching source archive
@@ -27,10 +31,11 @@ jobs:
           rm dist/rpm-context/.dockerignore
       - name: Build source and binary RPMs and test install and removal
         run: |
-          docker build --file packaging/oracle-linux/Dockerfile.rpm \
+          docker build --build-arg OL_VERSION=${{ matrix.release }} \
+            --file packaging/oracle-linux/Dockerfile.rpm \
             --output type=local,dest=dist/rpm dist/rpm-context
       - uses: actions/upload-artifact@v4
         with:
-          name: tigervnc-apple-ol9-rpm-x86_64
+          name: tigervnc-apple-ol${{ matrix.release }}-rpm-x86_64
           path: dist/rpm/*
           if-no-files-found: error

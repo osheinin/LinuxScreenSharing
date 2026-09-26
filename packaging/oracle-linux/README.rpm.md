@@ -1,7 +1,8 @@
-# Oracle Linux 9 RPM
+# Oracle Linux 8 and 9 RPMs
 
-This package targets **Oracle Linux 9 x86_64** with an existing Xorg/X11 desktop.
-It is a development build of the TigerVNC Apple clipboard fork (1.16.80).
+This package targets **Oracle Linux 8 or 9 x86_64** with an existing Xorg/X11 desktop.
+Use the `.el8` RPM on OL8 and the `.el9` RPM on OL9; the packages enforce this
+OS version requirement. It is a development build of the TigerVNC Apple clipboard fork (1.16.80).
 
 ## Install
 
@@ -10,7 +11,10 @@ checksum (the manifest also lists the source RPM):
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-sudo dnf install ./tigervnc-apple-1.16.80-1.el9.x86_64.rpm
+# Oracle Linux 8:
+sudo dnf install ./tigervnc-apple-1.16.80-2.el8.x86_64.rpm
+# Oracle Linux 9:
+# sudo dnf install ./tigervnc-apple-1.16.80-2.el9.x86_64.rpm
 ```
 
 DNF installs the required runtime libraries from your configured Oracle
@@ -42,7 +46,7 @@ chmod 700 ~/.vnc
 On the Mac:
 
 ```sh
-ssh -N -L 5901:127.0.0.1:5901 your-user@your-ol9-host
+ssh -N -L 5901:127.0.0.1:5901 your-user@your-linux-host
 open vnc://localhost:5901
 ```
 
@@ -56,12 +60,14 @@ Stop the server, then run `sudo dnf remove tigervnc-apple`. Your personal passwo
 file remains in `~/.vnc`.
 
 The matching `.src.rpm` contains the complete source archive and RPM spec. On an
-OL9 build machine with the fork's development repositories configured:
+matching OL8 or OL9 build machine with the fork's development repositories configured:
 
 ```sh
 sudo dnf install rpm-build dnf-plugins-core
-sudo dnf builddep ./tigervnc-apple-1.16.80-1.el9.src.rpm
-rpmbuild --rebuild ./tigervnc-apple-1.16.80-1.el9.src.rpm
+# OL8 example; use el9 and rhel 9 on OL9:
+sudo dnf builddep --define "rhel 8" ./tigervnc-apple-1.16.80-2.el8.src.rpm
+rpmbuild --rebuild --define "rhel 8" --define "dist .el8" \
+  ./tigervnc-apple-1.16.80-2.el8.src.rpm
 ```
 
 See `packaging/oracle-linux/install-deps.sh` in the source for repository setup.
@@ -70,5 +76,5 @@ The binary RPM includes the GPL and upstream third-party notices in its license
 directory. Keep the source RPM available alongside the binary when redistributing.
 
 CI runs protocol tests, tests both clipboard directions under Xvfb, installs the
-RPM in a fresh OL9 container, repeats the clipboard test against installed binaries,
+RPM in a fresh container of its target Oracle Linux release, repeats the clipboard test against installed binaries,
 and tests removal. This does not replace testing a full GNOME desktop session.

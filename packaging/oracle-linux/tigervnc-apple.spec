@@ -2,16 +2,20 @@
 %global debug_package %{nil}
 %global app_prefix /opt/tigervnc-apple
 
+%if 0%{?rhel} != 8 && 0%{?rhel} != 9
+%{error: Build on Oracle Linux 8 or 9 with the matching rhel macro set}
+%endif
+
 Name:           tigervnc-apple
 Version:        1.16.80
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        TigerVNC X11 server with macOS text clipboard interoperability
 License:        GPL-2.0-or-later AND MIT
 URL:            https://github.com/osheinin/LinuxScreenSharing
 Source0:        %{name}-%{version}.tar.gz
 ExclusiveArch:  x86_64
 Requires:       oraclelinux-release
-Requires:       system-release(releasever) = 9
+Requires:       system-release(releasever) = %{rhel}
 BuildRequires:  gcc, gcc-c++, cmake, make
 BuildRequires:  zlib-devel, pixman-devel, libjpeg-turbo-devel, gnutls-devel
 BuildRequires:  libX11-devel, libXext-devel, libXtst-devel
@@ -19,7 +23,7 @@ BuildRequires:  libXdamage-devel, libXfixes-devel, libXrandr-devel
 BuildRequires:  python3, openssl, xorg-x11-server-Xvfb, xclip
 
 %description
-Shares an existing X11 desktop on Oracle Linux 9 and adds optional UTF-8
+Shares an existing X11 desktop on Oracle Linux %{rhel} and adds optional UTF-8
 plain-text clipboard exchange with the built-in macOS Screen Sharing client.
 Installs in /opt/tigervnc-apple alongside the distribution's TigerVNC.
 Run as the desktop user with -AppleClipboard and connect through an SSH tunnel.
@@ -41,7 +45,7 @@ cmake --build build-rpm --target x0vncserver vncpasswd \
   apple_clipboard_test apple_protocol_test --parallel %{_smp_build_ncpus}
 
 %check
-ctest --test-dir build-rpm --output-on-failure -R '^apple_'
+(cd build-rpm && ctest --output-on-failure -R '^apple_')
 python3 tests/apple/x11_clipboard_smoke.py build-rpm
 
 %install
@@ -61,5 +65,8 @@ install -Dpm 0644 unix/vncpasswd/vncpasswd.man \
 %{app_prefix}/
 
 %changelog
+* Fri Sep 25 2026 LinuxScreenSharing contributors - 1.16.80-2
+- Build separate Oracle Linux 8 and 9 RPMs with matching OS dependencies.
+
 * Fri Sep 25 2026 LinuxScreenSharing contributors - 1.16.80-1
 - Initial Oracle Linux 9 RPM with Apple clipboard support and source RPM.
